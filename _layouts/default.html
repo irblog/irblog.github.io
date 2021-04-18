@@ -1,15 +1,22 @@
-<!DOCTYPE html>
-<html lang="{{ page.lang | default: "en" }}">
-        {%- include head.html -%}
-    <body a="{{ site.theme_config.appearance | default: "auto" }}">
-    <main class="page-content" aria-label="Content">
-        <div class="w">
-            {{ content }}
-        </div>
-    </main>
-
-    {% if site.goat_counter and jekyll.environment == "production" %}
-        {% include goat_counter.html %}
-    {% endif %}
-    </body>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{{ page.title }}</title>
+    <link rel="stylesheet" href="/assets/css/paper.css">
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg" />
+  </head>
+  <body>
+    {% include navigation.html %}
+    <article class="article">
+      <h1 class="article-title">{{ content }}</h1>
+      <p class="article-meta">Written by <a href="#">Super User</a></p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Corrupti iure totam nam debitis aliquid impedit, et quas omnis aspernatur optio molestias ex laborum quia. Ducimus culpa tempore, veritatis officia delectus dolore dignissimos reprehenderit vero, sunt odit placeat est non molestiae ipsa nam velit in iusto hic quasi similique facere. Maxime?</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Corrupti iure totam nam debitis aliquid impedit, et quas omnis aspernatur optio molestias ex laborum quia. Ducimus culpa tempore, veritatis officia delectus dolore dignissimos reprehenderit vero, sunt odit placeat est non molestiae ipsa nam velit in iusto hic quasi similique facere. Maxime?</p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Corrupti iure totam nam debitis aliquid impedit, et quas omnis aspernatur optio molestias ex laborum quia. Ducimus culpa tempore, veritatis officia delectus dolore dignissimos reprehenderit vero, sunt odit placeat est non molestiae ipsa nam velit in iusto hic quasi similique facere. Maxime?</p>
+    </div>
+  </body>
 </html>
