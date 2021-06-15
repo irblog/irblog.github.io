@@ -1,8 +1,7 @@
 ---
-layout: post
+layout: default
 title: About
 ---
+# About page
 
-This is an example page!
-
-Actually, it has the same layout of a post...
+This page tells you a little bit about me.

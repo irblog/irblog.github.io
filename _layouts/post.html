@@ -1,7 +1,9 @@
 ---
 layout: default
 ---
-
-{% include back_link.html %}
-<h1>{{ page.title }}</h1>
-{{ content }}
+<article class="article">
+    <h1>{{ page.title }}</h1>
+    <p class="article-meta">{{ page.date | date_to_string }}</p>
+    <p><strong>{{ page.teaser }}</strong></p>
+    {{ content }}
+</div>
