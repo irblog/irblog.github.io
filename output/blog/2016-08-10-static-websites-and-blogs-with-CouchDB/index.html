@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Static websites and blogs with CouchDB</title>
+    <link rel="stylesheet" href="/css/paper.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="icon" type="image/svg+xml" href="/img/favicon.svg" />  </head>
+  <body>
+        <nav class="split-nav">
+          <span class="nav-brand">
+            <h3><a href="/">i8z</a></h3>
+          </span>
+          <div class="collapsible">
+            <input id="collapsible1" type="checkbox" name="collapsible1">
+            <label for="collapsible1">
+              <div class="bar1"></div>
+              <div class="bar2"></div>
+            </label>
+            <div class="collapsible-body">
+              <ul class="inline">
+            	    <li>  
+        	      <a href="/">
+              	    Home
+            	    </a>
+        	    </li>
+            	    <li>  
+        	      <a href="/about.html">
+              	    About
+            	    </a>
+        	    </li>
+              </ul>
+            </div>
+          </div>
+        </nav>    <article class="article">
+  <h1>Static websites and blogs with CouchDB</h1>
+    <p class="article-meta"></p>
+    <p><strong>Web performance is basically not a beast - loading as less as possible amount (~10KB) of pre-rendered html&#x2F;css in as less as possible http requests (~1) will display the site in a really short time (~300ms). Let&#39;s do it with a CouchDB.</strong></p>
+    <h2>blog post life-circle</h2>
+<p><img src="posting-flow.svg" alt="posting flow">
+The life-circle is very common. Finally a post should be only one request away. Beyond to minimize the server-side computing time the post should be ready for response &quot;as is&quot;. Like static HTML sites on the disk.</p>
+<p>Very similar to <a href="http://jekyllrb.com/">Jekyll</a> a post has a source code in <a href="http://daringfireball.net/projects/markdown/">Markdown</a> which will be rendered to HTML every time a post gets published. The later readers request will be responded with that prepared site.</p>
+<p>A <a href="http://couchdb.apache.org/">CouchDB</a> can store static files as attachments of database documents. When such an attachments gets requested:</p>
+<blockquote>
+<p>The raw data of the associated attachment is returned (just as if you were accessing a static file. The returned HTTP Content-type will be the same as the content type set when the document attachment was submitted into the database. <a href="http://docs.couchdb.org/en/latest/api/documents.html#get-db-doc-attachment">CouchDB docs</a></p>
+</blockquote>
+<p>The following implementation is not a competition to <a href="http://jekyllrb.com/">Jekyll</a> in any meaning - it's simply the port of the idea to a <a href="http://couchdb.apache.org/">CouchDB</a> - <a href="http://couchapp.org/page/index">CouchApp</a>.</p>
+<h2>the request-response flow</h2>
+<p><img src="posting-sequence.svg" alt="posting sequence"> The ideal flow of create, preview, publish to read needs at least five requests. The outlined durations showing how the performance win possibly can be achieved.</p>
+<p>Sure, how much the performance is increasing can a live test show only. Fortunately no additional test case must be defined: the comparison of the preview and the read request is enough.The approximately same amount of similar HTML (the preview has an additional but small form included) gets loaded. Apples are compared with (little bigger) apples.</p>
+<p>The CouchDB log should be a credible measuring tool. The numbers will be discussed when available.</p>
+<h2>coding CREATE/EDIT</h2>
+<p><img src="create.svg" alt="the create">
+For faster prototyping no HTML form will be implemented. CouchDB's built-in management console (assessable under <code>localhost:5984/_utils</code>) will do the job well.</p>
+<p>Remains to define a rewrite rule, a doc schema and validations for doc updates.</p>
+<p>A PUT of JSON to the URI <code>/post/hello-world</code> stores the post. Thats the necessary rewrite rule for the <code>rewrites.json</code>.</p>
+<pre><code class="language-json">{
+  &quot;from&quot;: &quot;post/:pid&quot;,
+  &quot;to&quot;: &quot;../../:pid&quot;,
+  &quot;method&quot;: &quot;PUT&quot;
+}
+</code></pre>
+<p>As described above the JSON doc gets the final version of the blog post as HTML file - called <code>static.html</code>. The <code>_id</code> must be a URL-safe string - e.g. the post title. The content source is stored separately in the properties <code>title</code>, <code>teaser</code> and <code>markdown</code>.</p>
+<pre><code class="language-json">{
+  &quot;_id&quot;: &quot;&quot;, // e.g. hello-world
+  &quot;_rev&quot;: &quot;&quot;,
+  &quot;_attachements&quot;: {
+    &quot;static.html&quot;: {} //published post
+  },
+  &quot;title&quot;: &quot;Hello World!&quot;, //content src
+  &quot;teaser&quot;: &quot;&quot;, //content src
+  &quot;markdown&quot;: &quot;&quot;, //content src
+  &quot;created_at&quot;: &quot;&quot;,
+  &quot;edited_at&quot;: &quot;&quot;,
+  &quot;publish_at&quot;: &quot;&quot;,
+  &quot;type&quot;: &quot;blogpost&quot;
+}
+</code></pre>
+<p>To ensure the semantic and structural correctness of the JSON post docs every write access (create, update, delete) needs to be validated before.</p>
+<blockquote>
+<p>A design document may contain a function named validate_doc_update which can be used to prevent invalid or unauthorized document update requests from being stored. <a href="http://docs.couchdb.org/en/latest/couchapp/ddocs.html#validate-document-update-functions">CouchDB docs</a></p>
+</blockquote>
+<p>The <code>validate_doc_update.js</code> ensures:</p>
+<ul>
+<li>only signed in user can send requests</li>
+<li>only members of the role 'writer' and admins are authorized</li>
+<li>content properties are present and not empty</li>
+<li>doc type is 'blogpost'</li>
+<li>the create and update timestamps are present and in chronological order</li>
+<li>same for the optional publish timestamp</li>
+</ul>
+<p>The code details are viewable as <a href="https://github.com/llabball/blog-post_static-couchdb-blog/commit/f9a52bb83de9190b853c9457b59173318983bc29">github commit</a> and <a href="https://github.com/llabball/blog-post_static-couchdb-blog/tree/v0.1.0">tag</a>. The resulting file/JSON structure is:</p>
+<pre><code class="language-json">ddoc
+ |_ docs
+ |    |_test-post //test data
+ |_ vendor //commonjs libs
+ |    |_ validateDocUpdateUtils
+ |_ rewrites
+ |_ validate_doc_update
+</code></pre>
+<h2>coding PREVIEW</h2>
+<p><img src="preview.svg" alt="preview flow">
+The preview call lets the CouchDB merge a HTML template with the content source properties <code>title</code>, <code>teaser</code> and <code>markdown</code>. The current <code>static.html</code> don't gets updated. The preview website contains a small form to publish the preview which would overwrite the <code>static.html</code> finally. So, the <code>markdown</code> property can have a totally different content (useful as draft) to the <code>static.html</code>.</p>
+<p>The preview step in the whole flow is the most complex. Thats the reason why it exists. It should ensure that the biggest server load is done <strong>before</strong> the first reader enters the post and not on every request.</p>
+<p>First, the rewrite rule:</p>
+<pre><code class="language-json">{
+  &quot;from&quot;: &quot;post/:pid/preview&quot;,
+  &quot;to&quot;: &quot;_show/preview/:pid&quot;,
+  &quot;method&quot;: &quot;GET&quot;
+}
+</code></pre>
+<p>The rule forwards a request like <code>/post/hello-world/preview</code> to a <a href="http://wiki.apache.org/couchdb/Formatting_with_Show_and_List">CouchDB show</a> named &quot;preview&quot; (stored in <code>shows/preview.js</code>). The show gets the JSON post doc and:</p>
+<ol>
+<li>Renders via <a href="https://github.com/chjj/marked">marked.js</a> the <code>doc.markdown</code> content to HTML.</li>
+<li>Merges a HTML template with the rendered markdown and the content from <code>doc.title</code> and <code>doc.teaser</code> via <a href="https://github.com/janl/mustache.js/">mustache.js</a>.</li>
+<li>Responses the (dynamically rendered) HTML site to the browser.</li>
+</ol>
+<p>The code details are viewable as <a href="https://github.com/llabball/blog-post_static-couchdb-blog/commit/6c0036d0c676b275c13078d10f71325f61e3f0f0">github commit</a> and <a href="https://github.com/llabball/blog-post_static-couchdb-blog/tree/v0.2.0">tag</a>. The resulting file/JSON structure is:</p>
+<pre><code class="language-json">ddoc
+ |_ vendor
+ |   |_ mustache
+ |   |_ marked
+ |_ shows
+ |   |_ preview
+ |_ templates
+ |   |_ post
+ |_ rewrites
+</code></pre>
+<h2>coding publish</h2>
+<p><img src="publish.svg" alt="publish flow">
+When the post should be published a little JavaScript form:</p>
+<ol>
+<li>takes a copy of the current site</li>
+<li>removes the upload form from the copy</li>
+<li>uploads the copy as Base64-encoded attachment to the CouchDB</li>
+</ol>
+<p>The upload form will be appended to HTML of the response from the PREVIEW as <a href="https://github.com/janl/mustache.js/#partials">mustache partial</a> (<code>templates/uploadform</code>).</p>
+<p>The last step is worth a closer look. The CREATE/EDIT-endpoint could be used - the JSON doc to be send have to include the <code>static.html</code> like (<a href="http://docs.couchdb.org/en/latest/api/document/common.html#creating-multiple-attachments">CouchDB docs</a>):</p>
+<pre><code class="language-json">{
+  ...,
+  &quot;_attachments&quot;: {
+    &quot;static.html&quot;: {
+      &quot;content_type&quot;:&quot;text\/html&quot;,
+      &quot;data&quot;: btoa(&quot;&lt;html&gt;...&lt;/html&gt;&quot;)
+    }
+  },
+  ...
+}
+</code></pre>
+<p><strong>The drawback</strong> is that the preview response have to include the whole JSON post doc - not only the response amount increases directly proportional to the content length also the big chunk of JSON have to be evaluated. The steps READ and PREVIEW will become not longer comparable.</p>
+<p><strong>The solution</strong> is to use a <a href="http://docs.couchdb.org/en/latest/couchapp/ddocs.html#update-functions">CouchDB update handler</a>. Rewrite rule:</p>
+<pre><code class="language-json">{
+  &quot;from&quot;: &quot;post/:pid/publish&quot;,
+  &quot;to&quot;: &quot;_updates/publish/:pid&quot;,
+  &quot;method&quot;: &quot;POST&quot;
+}
+</code></pre>
+<p>Only the <code>_id</code> and <code>_rev</code> (to ensure updating latest version only) have to be known. The Base64-encoded HTML gets posted to the <code>updates/publish.js</code> where the JSON post doc gets merged with the attachment as showed above (but server-side now). The code details are viewable as <a href="https://github.com/llabball/blog-post_static-couchdb-blog/commit/3e55abdd15e747cf91faa0aa09c04171147ac470">github commit</a> and <a href="https://github.com/llabball/blog-post_static-couchdb-blog/tree/v0.3.0">tag</a>. The resulting file/JSON structure is:</p>
+<pre><code class="language-json">ddoc
+ |_ templates
+ |   |_ post
+ |   |_ uploadform
+ |_ updates
+ |   |_publish
+ |_ rewrites
+</code></pre>
+<h2>coding READ</h2>
+<p><img src="read.svg" alt="read flow">
+It comes to an end: finally a GET request to a URI like <code>/post/hello-world</code> should be forwarded to the resource <code>db/hello-world/static.html</code>. Additionally all other static resources of the post like images should be accessible too:</p>
+<pre><code class="language-json">{
+  &quot;from&quot;: &quot;post/:pid/:file&quot;,
+  &quot;to&quot;: &quot;../../:pid/:file&quot;,
+  &quot;method&quot;: &quot;GET&quot;
+},
+{
+  &quot;from&quot;: &quot;post/:pid&quot;,
+  &quot;to&quot;: &quot;../../:pid/static.html&quot;,
+  &quot;method&quot;: &quot;GET&quot;
+}
+</code></pre>
+<p>The code details are viewable as <a href="https://github.com/llabball/blog-post_static-couchdb-blog/commit/69a03f5e7c1520a25eafac44e8d13c159f6cbaa9">github commit</a> and <a href="https://github.com/llabball/blog-post_static-couchdb-blog/tree/v0.4.0">tag</a>.</p>
+<h2>measuring execution time</h2>
+<p>As described above the steps PREVIEW and READ should be compared when requested on the same blog post (<code>/post/static-websites-and-blogs-with-CouchDB</code>). The CouchDB logs are accessible under <code>localhost:5984/_log?bytes=50000</code>. These are the logs which are record-able when the CouchDB log level is set to <code>debug</code>:</p>
+<pre><code class="language-js">// /post/static-websites-and-blogs-with-CouchDB/preview
+[21:01:08] GET /post/:postid/preview
+//rewrite to _show/preview
+[21:01:08] ... 200
+
+// /post/static-websites-and-blogs-with-CouchDB
+[21:04:04] GET /post/:postid
+//rewrite to :postid/static.html 
+[21:04:04] ... 200
+</code></pre>
+<p>Hmm. Ok. 1:0 for CouchDB. The execution time is in both cases lesser or equal 1 second. Maybe the meaning of that log lines is unusable to measure the correct execution time but one thing looks like expected: During the PREVIEW request are many more log lines visible then to the static site. The CouchDB has to handle more data (e.g. the design doc) - maybe that matters when much more concurrency requests per second coming in.</p>
+<p>With the <a href="http://httpd.apache.org/docs/2.2/programs/ab.html">Apache HTTP server benchmarking tool</a> a heavier load can be simulated. A typical blog post can lead to 15 requests (HTML, images, css, js) to be fully loaded. Let's simulate 30 readers requesting the blog post the same time once dynamically rendered (PREVIEW) and in comparison static delivered (READ):</p>
+<pre><code class="language-js">// 450 requests - 180 concurrent connections
+
+//READ
+$ ab -n 450 -c 180 &quot;http://domain.tld/post/:postid&quot;
+
+//PREVIEW
+$ ab -n 450 -c 180 &quot;http://domain.tld/post/:postid/preview&quot;
+</code></pre>
+<p><img src="perfchart_abtest.svg" alt="perftest">
+Now it gets clearer. The chart shows both:</p>
+<ol>
+<li>The dynamically rendering (PREVIEW) of HTML take generally longer as delivering the static file (READ)</li>
+<li>The server load increases much quicker while PREVIEW then READ.</li>
+</ol>
+<p><strong>In this test case the request time for PREVIEW is around 6 times higher than for READ. That's what it was worth to know. Delivering pre-rendered, static HTML files from the CouchDB can be a big step to shorter loading times and lesser execution loads.</strong></p>
+<h2>Demo</h2>
+<p>This blog post itself is based on that system. So, you watching the demo right now.</p>
+<p>For playing around with the CouchApp you will need write access. The github repository contains instructions to easily host an own installation.</p>
+<h2>Links</h2>
+<p>source code: <a href="http://github.com/llabball/blog-post_static-couchdb-blog">github.com/llabball/blog-post_static-couchdb-blog</a></p>
+
+</div>
+  </body>
+</html>

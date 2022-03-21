@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title type="text">i8z.de</title>
+  <subtitle type="text">Personal blog</subtitle>
+  <link type="application/atom+xml" href="https://i8z.de/feed.atom" rel="self"/>
+  <link rel="alternate" type="text/html"
+   hreflang="en" href="https://i8z.de"/>
+<updated>2020-01-24T00:00:00Z</updated>
+  <id>urn:uuid:60a76c80-d399-2222-b93C-0003939e0af6</id>
+  <author>
+    <name>Ingo Radatz</name>
+  </author>
+  <rights>Copyright (c) 2022, Ingo Radatz</rights>
+  
+  <entry>
+    <title>Static websites and blogs with CouchDB</title>
+    <link rel="alternate" type="text/html" href="https://i8z.de/blog/2016-08-10-static-websites-and-blogs-with-CouchDB/"/>
+    <updated>2016-10-08T00:00:00Z</updated>
+    <id>https://i8z.de/blog/2016-08-10-static-websites-and-blogs-with-CouchDB/</id>
+    <content type="xhtml" xml:lang="en"
+     xml:base="https://i8z.de/">
+      <div xmlns="http://www.w3.org/1999/xhtml"><p>Web performance is basically not a beast - loading as less as possible amount (~10KB) of pre-rendered html/css in as less as possible http requests (~1) will display the site in a really short time (~300ms). Let&#39;s do it with a CouchDB.</p></div></content>
+  </entry>
+  
+  <entry>
+    <title>URL Shortening with CouchDB</title>
+    <link rel="alternate" type="text/html" href="https://i8z.de/blog/2018-06-24-url-shortening-with-couchdb/"/>
+    <updated>2018-06-24T00:00:00Z</updated>
+    <id>https://i8z.de/blog/2018-06-24-url-shortening-with-couchdb/</id>
+    <content type="xhtml" xml:lang="en"
+     xml:base="https://i8z.de/">
+      <div xmlns="http://www.w3.org/1999/xhtml"><p>Update handler are not allowed to execute GET requests in a default CouchDB installation. That must be an architectural  decision - technically its easy to achive, one code line in the CouchDB source code must be commented out. Why this could it be worth showing the use cases &quot;url shortening&quot;.</p></div></content>
+  </entry>
+  
+  <entry>
+    <title>Filme der ARD/ZDF/etc. Mediathek auf Smartphone &amp; Co.</title>
+    <link rel="alternate" type="text/html" href="https://i8z.de/blog/2020-01-24-ARD-ZDF-etc-Mediathek-auf-iPhone-iPad-AppleTV/"/>
+    <updated>2020-01-24T00:00:00Z</updated>
+    <id>https://i8z.de/blog/2020-01-24-ARD-ZDF-etc-Mediathek-auf-iPhone-iPad-AppleTV/</id>
+    <content type="xhtml" xml:lang="en"
+     xml:base="https://i8z.de/">
+      <div xmlns="http://www.w3.org/1999/xhtml"><p>Fernsehfilme aufnehmen mit dem Smartphone</p></div></content>
+  </entry>
+</feed>

@@ -1,0 +1,13 @@
+---
+layout: layouts/default
+title: Start
+---
+<h1>Posts</h1>
+<div>
+{{#collections.post}}
+    <div>
+        <h2><a href="{{{ url }}}">{{ data.title }}</a></h2>
+        {{ data.teaser }}
+    </div>
+{{/collections.post}}
+</div>
