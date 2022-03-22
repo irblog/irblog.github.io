@@ -4,7 +4,7 @@
   "description": "Blog template and build system",
   "main": "index.html",
   "scripts": {
-    "start": "serve ./output",
+    "start": "serve ./docs",
     "build": "eleventy --config=config.js"
   },
   "repository": {

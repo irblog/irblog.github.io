@@ -5,7 +5,7 @@ module.exports = function(eleventyConfig) {
   return {
     dir: {
       input: "input",
-      output: "output"
+      output: "docs"
     },
     dataTemplateEngine: "mustache",
     htmlTemplateEngine: "mustache",
